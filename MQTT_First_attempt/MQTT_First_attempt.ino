@@ -14,7 +14,7 @@
 /********* WiFi Access Point ***********/
 
 #define WLAN_SSID       "nowire"           // Wi-Fi network name
-#define WLAN_PASS       "dontaskmeagain"           // Wi-Fi password
+#define WLAN_PASS       "*******"           // Wi-Fi password
 
 /********** MQTT Broker ************/
 
