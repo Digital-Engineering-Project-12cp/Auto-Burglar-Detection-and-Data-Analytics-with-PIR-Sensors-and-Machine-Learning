@@ -1,5 +1,5 @@
 package main
-
+//this code is to be installed in the virtual machine side (host)
 import (
 	"flag"
 	"fmt"  //import fmt for printing
