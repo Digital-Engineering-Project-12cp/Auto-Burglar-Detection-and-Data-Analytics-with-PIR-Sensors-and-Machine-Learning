@@ -12,7 +12,7 @@
 /********* WiFi Access Point ***********/
 
 #define WLAN_SSID       "nowire"           // Wi-Fi network name
-#define WLAN_PASS       "dontaskmeagain"           // Wi-Fi password
+#define WLAN_PASS       "*******"           // Wi-Fi password
 
 /********** MQTT Broker ************/
 
@@ -23,7 +23,7 @@
 #define AIO_CID         ""     // MQTT client ID
 
 
-// Start a counter for serial logging and set the initial value to no motion 
+// Start a counter for serial logging and set the initial value to no motion
 int counter = 0;
 int previousReading = LOW;
 
@@ -31,7 +31,7 @@ WiFiClient client;
 // Setup the MQTT client class by passing in the WiFi client and MQTT server and login details.
 Adafruit_MQTT_Client mqtt(&client, AIO_SERVER, AIO_SERVERPORT, AIO_USERNAME, AIO_KEY, AIO_CID);
 
-// Setup publish feeds - define topic name in parenthesis 
+// Setup publish feeds - define topic name in parenthesis
 Adafruit_MQTT_Publish status  = Adafruit_MQTT_Publish(&mqtt, AIO_CID "/feeds/motion");
 Adafruit_MQTT_Publish motion_topic  = Adafruit_MQTT_Publish(&mqtt, AIO_CID "/feeds/motion");
 
@@ -42,17 +42,17 @@ int value = 0;
 /////////////////////////////
 //VARS
 //the time we give the sensor to calibrate (10-60 secs according to the datasheet)
-int calibrationTime = 0;        
+int calibrationTime = 0;
 
 //the time when the sensor outputs a low impulse
-long unsigned int lowIn;         
+long unsigned int lowIn;
 
-//the amount of milliseconds the sensor has to be low 
+//the amount of milliseconds the sensor has to be low
 //before we assume all motion has stopped
-long unsigned int pause = 5000;  
+long unsigned int pause = 5000;
 
 boolean lockLow = true;
-boolean takeLowTime;  
+boolean takeLowTime;
 
 int pirPin = 4;    // the digital pin connected to the PIR sensor's output
 int ledPin = 2;    // the digital pin connected to built-in LED
@@ -122,26 +122,26 @@ void setup() {
   pinMode(switchPin, INPUT_PULLUP);
   pinMode(0, OUTPUT);
   digitalWrite(0, LOW);
-  
- 
+
+
 MQTT_connect();
- 
+
        if(digitalRead(switchPin) == LOW){
-       
-          motion_topic.publish("Motion/Home");  
+
+          motion_topic.publish("Motion/Home");
           Serial.println("---");
           Serial.println("Motion/Home");
-        
-       
+
+
        }
        else {
         if(digitalRead(switchPin) == HIGH){
-          motion_topic.publish("Motion/Away"); 
+          motion_topic.publish("Motion/Away");
          Serial.println("---");
-         Serial.println("Motion/Away"); 
+         Serial.println("Motion/Away");
         }
-       
-         
+
+
        }
 
        delay(2000);
@@ -149,8 +149,8 @@ MQTT_connect();
        ESP.deepSleep(0);
 
   //give the sensor some time to calibrate
-  
-  
+
+
 
 }
 
@@ -158,8 +158,8 @@ void loop() {
   // Ensure the connection to the MQTT server is alive (this will make the first
   // connection and automatically reconnect when disconnected).  See the MQTT_connect
   // function definition further below.
-  
 
-  
+
+
 
 }
