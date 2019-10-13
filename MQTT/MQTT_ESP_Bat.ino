@@ -12,11 +12,11 @@
 /********* WiFi Access Point ***********/
 
 #define WLAN_SSID       "******"           // Wi-Fi network name
-#define WLAN_PASS       "******"           // Wi-Fi password
+#define WLAN_PASS       "*******"           // Wi-Fi password
 
 /********** MQTT Broker ************/
 
-#define AIO_SERVER      "***********"  // MQTT broker IP
+#define AIO_SERVER      "********"  // MQTT broker IP
 #define AIO_SERVERPORT  1883             // MQTT broker port
 #define AIO_USERNAME    ""           // MQTT username
 #define AIO_KEY         ""           // MQTT password
