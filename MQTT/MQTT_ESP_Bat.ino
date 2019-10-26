@@ -1,106 +1,40 @@
-/*
- Basic ESP8266 MQTT PIR sketch
-
-*/
-
 #include <ESP8266WiFi.h>
-#include "Adafruit_MQTT.h"
-#include "Adafruit_MQTT_Client.h"
-
-// Update these with values suitable for your network.
-
-/********* WiFi Access Point ***********/
-
-#define WLAN_SSID       "******"           // Wi-Fi network name
-#define WLAN_PASS       "*******"           // Wi-Fi password
-
-/********** MQTT Broker ************/
-
-#define AIO_SERVER      "********"  // MQTT broker IP
-#define AIO_SERVERPORT  1883             // MQTT broker port
-#define AIO_USERNAME    ""           // MQTT username
-#define AIO_KEY         ""           // MQTT password
-#define AIO_CID         ""     // MQTT client ID
-
-
-IPAddress staticIP(192, 168, 0, 109);
-// Set your Gateway IP address
-IPAddress gateway(192, 168, 0, 1);
-
-IPAddress subnet(255, 255, 255, 0);
+#include <DNSServer.h>
+#include <ESP8266WebServer.h>
+#include <WiFiManager.h>
+#include <PubSubClient.h>
+#include "FS.h"
+#include <ArduinoJson.h>
 
 
 
+//const char* mqtt_server = "192.168.0.102";
+//const char* pub_topic = "/feeds/motion";
 
+char mqtt_server[40];
+char token[30] = "/feeds/moto";
+const char* pub_topic = "";
 
-
-// Start a counter for serial logging and set the initial value to no motion
-int counter = 0;
-int previousReading = LOW;
-
-WiFiClient client;
-// Setup the MQTT client class by passing in the WiFi client and MQTT server and login details.
-Adafruit_MQTT_Client mqtt(&client, AIO_SERVER, AIO_SERVERPORT, AIO_USERNAME, AIO_KEY, AIO_CID);
-
-// Setup publish feeds - define topic name in parenthesis
-Adafruit_MQTT_Publish status  = Adafruit_MQTT_Publish(&mqtt, AIO_CID "/feeds/motion");
-Adafruit_MQTT_Publish motion_topic  = Adafruit_MQTT_Publish(&mqtt, AIO_CID "/feeds/motion");
+WiFiClient espClient;
+PubSubClient client(espClient);
 
 long lastMsg = 0;
 char msg[50];
 int value = 0;
 
-/////////////////////////////
-//VARS
-//the time we give the sensor to calibrate (10-60 secs according to the datasheet)
-int calibrationTime = 0;
+char message_buff[50];
 
-//the time when the sensor outputs a low impulse
-long unsigned int lowIn;
-
-//the amount of milliseconds the sensor has to be low
-//before we assume all motion has stopped
-long unsigned int pause = 5000;
-
-boolean lockLow = true;
-boolean takeLowTime;
-
-int pirPin = 4;    // the digital pin connected to the PIR sensor's output
-int ledPin = 2;    // the digital pin connected to built-in LED
+const int analogInPin = A0;
+int sensorValue = 0;
 int switchPin = 5;
-bool switchStatus = false;
+int pirPin = 4;
 
-int sensorValue = 0;  //ADC battery level in range 0 -1024
-
-const int analogInPin = A0;  //for battery level
-
-void MQTT_connect();
-
-void setup_wifi() {
-
-  delay(10);
-  // We start by connecting to a WiFi network
-  Serial.println();
-  Serial.print("Connecting to ");
-  Serial.println(WLAN_SSID);
-  WiFi.config(staticIP, gateway, subnet);
-
-  WiFi.begin(WLAN_SSID, WLAN_PASS);
+bool shouldSaveConfig = false;
 
 
-
-
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
-
-
-
-  Serial.println("");
-  Serial.println("WiFi connected");
-  Serial.println("IP address: ");
-  Serial.println(WiFi.localIP());
+void saveConfigCallback () {
+  Serial.println("Should save config");
+  shouldSaveConfig = true;
 }
 
 
@@ -114,92 +48,208 @@ float batteryLevel =  sensorValue  * caliberationValue;
 return batteryLevel;
 }
 
-  // Setup a MQTT subscription
 
+void callback(char* topic, byte* payload, unsigned int length) {
+  Serial.print("Message arrived [");
+  Serial.print(topic);
+  Serial.print("] ");
+  for (int i = 0; i < length; i++) {
+    Serial.print((char)payload[i]);
+  }
+  Serial.println();
 
-void MQTT_connect() {
-  int8_t ret;
-
-  // Stop if already connected.
-  if (mqtt.connected()) {
-    return;
+  // Switch on the LED if an 1 was received as first character
+  if ((char)payload[0] == '1') {
+    digitalWrite(BUILTIN_LED, LOW);   // Turn the LED on (Note that LOW is the voltage level
+    // but actually the LED is on; this is because
+    // it is active low on the ESP-01)
+  } else {
+    digitalWrite(BUILTIN_LED, HIGH);  // Turn the LED off by making the voltage HIGH
   }
 
-
-
-
-  Serial.print("Connecting to MQTT... ");
-
-  uint8_t retries = 3;
-  while ((ret = mqtt.connect()) != 0) { // connect will return 0 for connected
-       Serial.println(mqtt.connectErrorString(ret));
-       Serial.println("Retrying MQTT connection in 5 seconds...");
-       mqtt.disconnect();
-       delay(5000);  // wait 5 seconds
-       retries--;
-       if (retries == 0) {
-         // basically die and wait for WDT to reset me
-         while (1);
-       }
-  }
-  Serial.println("MQTT Connected!");
- // status.publish("online");
 }
 
+
+void reconnect() {
+  // Loop until we're reconnected
+  while (!client.connected()) {
+    Serial.print("Attempting MQTT connection...");
+    // Create a random client ID
+    String clientId = "ESP8266Client-";
+    clientId += String(random(0xffff), HEX);
+    // Attempt to connect
+    if (client.connect(clientId.c_str())) {
+      Serial.println("connected");
+      // Once connected, publish an announcement...
+      client.publish("outTopic", "hello world");
+      // ... and resubscribe
+      client.subscribe("inTopic");
+    } else {
+      Serial.print("failed, rc=");
+      Serial.print(client.state());
+      Serial.println(" try again in 5 seconds");
+      // Wait 5 seconds before retrying
+      delay(5000);
+    }
+  }
+}
+
+
+
+
+
 void setup() {
-  //pinMode(BUILTIN_LED, OUTPUT);     // Initialize the BUILTIN_LED pin as an output
   Serial.begin(115200);
-  setup_wifi();
   pinMode(pirPin, INPUT);
-  pinMode(ledPin, OUTPUT);
-  digitalWrite(ledPin, HIGH);
-  digitalWrite(pirPin, LOW);
   pinMode(switchPin, INPUT_PULLUP);
   pinMode(0, OUTPUT);
   digitalWrite(0, LOW);
 
 
-MQTT_connect();
 
-       if(digitalRead(switchPin) == LOW){
+  if (!SPIFFS.begin()) {
+    Serial.println("Failed to mount FS");
+    return;
+  }
+  loadConfig();
+  WiFiManagerParameter custommqttserver("server", "mqtt server", mqtt_server, 50);
+  WiFiManagerParameter customtoken("token", "token", token, 35);
 
-          float batval = battery_level();
-         // motion_topic.publish("Motion/Home" + String(batval));
-          motion_topic.publish(String(batval));
-          Serial.println("---");
-        //  Serial.println("Motion/Home" + String(batval));
-          Serial.println(String(batval));
+  WiFiManager wifiManager;
+  wifiManager.setSaveConfigCallback(saveConfigCallback);
 
-       }
-       else {
-        if(digitalRead(switchPin) == HIGH){
-          float batval1 = battery_level();
-         // motion_topic.publish("Motion/Away" + String(batval1));
-         motion_topic.publish(String(batval1));
-         Serial.println("---");
-        // Serial.println("Motion/Away" + String(batval1));
-        Serial.println(String(batval1));
-        }
+  wifiManager.addParameter(&custommqttserver);
+  wifiManager.addParameter(&customtoken);
 
 
-       }
 
-       delay(2000);
-        Serial.println("Entering Deep Sleep");
-       ESP.deepSleep(0);
 
-  //give the sensor some time to calibrate
 
+
+ //wifiManager.resetSettings();
+
+
+
+  wifiManager.autoConnect("AutoConnectAP");
+
+  wifiManager.setSTAStaticIPConfig(IPAddress(192,168,0,109), IPAddress(192,168,0,1), IPAddress(255,255,255,0));
+
+
+  strcpy(mqtt_server, custommqttserver.getValue());
+  strcpy(token, customtoken.getValue());
+
+
+   if (shouldSaveConfig) {
+    saveConfig();
+    }
+    pub_topic = token;
+    delay(500);
+    const char* mqttServer = mqtt_server;
+    Serial.println("Connected.");
+    client.setServer(mqtt_server, 1883);
 
 
 }
 
-void loop() {
-  // Ensure the connection to the MQTT server is alive (this will make the first
-  // connection and automatically reconnect when disconnected).  See the MQTT_connect
-  // function definition further below.
+
+bool loadConfig() {
+  File configFile = SPIFFS.open("/config.json", "r");
+  if (!configFile) {
+    Serial.println("Failed to open config file");
+    return false;
+  }
+
+  size_t size = configFile.size();
+  if (size > 1024) {
+    Serial.println("Config file size is too large");
+    return false;
+  }
+
+  // Allocate a buffer to store contents of the file.
+  std::unique_ptr<char[]> buf(new char[size]);
+
+  configFile.readBytes(buf.get(), size);
+
+  StaticJsonBuffer<200> jsonBuffer;
+  JsonObject& json = jsonBuffer.parseObject(buf.get());
+
+  if (!json.success()) {
+    Serial.println("Failed to parse config file");
+    return false;
+  }
+
+  strcpy(mqtt_server, json["mqtt_server"]);
+  strcpy(token, json["token"]);
+  Serial.println("mqtt_server: ");
+  Serial.println(mqtt_server);
+  Serial.println("token: ");
+  Serial.println(token);
+  return true;
+}
 
 
+
+bool saveConfig() {
+  StaticJsonBuffer<200> jsonBuffer;
+  JsonObject& json = jsonBuffer.createObject();
+  json["mqtt_server"] = mqtt_server;
+  json["token"] = token;
+
+  File configFile = SPIFFS.open("/config.json", "w");
+  if (!configFile) {
+    Serial.println("Failed to open config file for writing");
+    return false;
+  }
+
+  json.printTo(configFile);
+  configFile.close();
+  return true;
+}
+
+
+
+void forceConfigMode() {
+  Serial.println("Reset");
+  WiFi.disconnect();
+  Serial.println("Dq");
+  delay(500);
+  //ESP.restart();
+  delay(5000);
+}
+
+
+
+
+
+void loop(){
+  if (!client.connected()) {
+    reconnect();
+  }
+
+
+  if (digitalRead(switchPin) == HIGH) {
+    forceConfigMode();
+    }
+
+  if (digitalRead(switchPin) == LOW) {
+  float batval = battery_level();
+  String pubString = "Motion/" + String(batval);
+  pubString.toCharArray(message_buff, pubString.length()+1);
+  client.publish(pub_topic,message_buff);
+
+  Serial.println("---");
+  Serial.println("MotionHome/" + String(batval));
+
+  delay(2000);
+  Serial.println("\ngoing to sleep");
+  delay(100);
+  ESP.deepSleep(0);
+  delay(100);
+  Serial.println("\nsleep unsuccessful");
+
+
+
+  }
 
 
 }
