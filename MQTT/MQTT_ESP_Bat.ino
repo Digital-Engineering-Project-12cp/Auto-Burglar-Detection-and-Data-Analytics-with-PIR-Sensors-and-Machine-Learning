@@ -132,7 +132,7 @@ void setup() {
 
   wifiManager.autoConnect("AutoConnectAP");
 
-  wifiManager.setSTAStaticIPConfig(IPAddress(192,168,0,109), IPAddress(192,168,0,1), IPAddress(255,255,255,0));
+ // wifiManager.setSTAStaticIPConfig(IPAddress(192,168,0,109), IPAddress(192,168,0,1), IPAddress(255,255,255,0));
 
 
   strcpy(mqtt_server, custommqttserver.getValue());
@@ -238,7 +238,7 @@ void loop(){
   client.publish(pub_topic,message_buff);
 
   Serial.println("---");
-  Serial.println("MotionHome/" + String(batval));
+  Serial.println("Motion/" + String(batval));
 
   delay(2000);
   Serial.println("\ngoing to sleep");
