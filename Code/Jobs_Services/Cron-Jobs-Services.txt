@@ -1,0 +1,25 @@
+***********************************CRONJOBS*******************************************
+
+crontab -e
+
+
+
+
+
+20 23 * * 0 /bin/bash /home/manish/env/weekly_influx_upload.sh
+
+
+00 21 * * * /usr/bin/python3 /home/manish/env/weeklysummary_boxplot.py
+
+
+45 23 1 * * /usr/bin/python3 /home/manish/env/training_lstm.py
+
+
+00 03 3 * * /bin/bash /home/manish/env/refresh_training.sh
+
+
+
+
+*******************************SERVICES*****************************************************
+
+sudo systemtctl modelstart.service
