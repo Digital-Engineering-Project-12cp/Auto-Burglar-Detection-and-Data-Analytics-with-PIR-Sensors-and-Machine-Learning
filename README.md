@@ -23,7 +23,7 @@ There are several Internet of things (IoT) applications running on legacy networ
   specific format whereas the trainingdata.csv acts as the source file for training the LSTM model and the model is trained on a monthly basis. Hence, the datalog.csv is refreshed on a weekly basis and the trainingdata.csv is refreshed on a monthly basis. The training data.csv is also used for the statistical approaches and providing the weekly summary detection report.
 * The motion data, mobile mac data and the online switch data is visualized using **Grafana** and the predictions results are visualized using the **Node-Red dashboard**. Whenever the prediction results suggests an abnormal intrusion behavior, an email notification is sent out to the user.
 <br/>
-![Communication](Auto-Burglar-Detection-and-Data-Analytics-with-PIR-Sensors-and-Machine-Learning/Images/image/Communication_Flow.jpg)
+![Communication](Images/image/Communication_Flow.jpg)
 
 ## HARDWARE INTERFACING
 
@@ -35,7 +35,7 @@ Whenever there is a need to edit any of these parameters the ESP is required to 
 Also, as an enhancement, the hardware switch (indicating person presence) has been replaced with an online switch so that the user could have an access to it via the webpage rather than expecting the user to enable and disable the switch physically. This is achieved by the “Online switch node” configured in Node-RED. The switch can be turned on/off via Node-RED UI.
 Apart from switch functionality, Address Resolution protocol (ARP) has been incorporated in the application which is realized using the ARP node in Node-RED. The mac id of the user’s mobile is specified in the ARP node. Whenever, the user’s mobile is connected to Wi-Fi at his presence, the ARP outputs a value of “1” indicating that the user is at home.
 <br/>
-![PCB](Auto-Burglar-Detection-and-Data-Analytics-with-PIR-Sensors-and-Machine-Learning/Images/image/pcb.png)
+![PCB](Images/image/pcb.png)
 ## DATA ANALYSIS APPROACHES
 
 ### <ins>Historical data analysis</ins>
@@ -44,12 +44,12 @@ Apart from switch functionality, Address Resolution protocol (ARP) has been inco
 
 This approach involves the periodical querying of a InfluxDB database containing the historical data (timestamp data, week index data, time index data, motion data, online switch data,mobile mac data). This historical data in the InfluxDB database is updated on a weekly basis. In every five minutes, a query is passed to the database to return the number of detections for that five minute interval from the historical data which conveys the usual number of detections that normally happen on that day, for that five minute interval.This query result is then compared with the current number of detections observed in the current five minute interval. The detailed description of this approach is as follows:
 
-![PCB](Auto-Burglar-Detection-and-Data-Analytics-with-PIR-Sensors-and-Machine-Learning/Images/image/LogData.PNG)
+![PCB](Images/image/LogData.PNG)
 
 
 When the MQTT message “Motion/Voltage” is received at the server end which as the MQTT subscriber, the corresponding online switch data and the mobile MAC data at that instant of time is extracted. The MQTT message is fetched using the “mqtt in” node which is configured by providing the ip address of the raspberry pi “ 	” and the topic of the MQTT message “/feeds/motion”. The MQTT message “Motion/Voltage” is then further mapped as 1. The online switch value is extracted using the “switch” node which is a toggle button representing “0” at OFF state and “1” at ON state. The mobile mac data is derived from the “ARP” node where the MAC id of the user’s mobile is specified so that this MAC id is checked in the ARP table of the home’s network. Presence of the MAC id corresponds to “1” and absence of the same corresponds to “0”. As a result, the motion data will be always “1”, the online switch value will be either “0” or “1” and the mobile mac value will be either “0” or “1”. All these data are then combined together along with the corresponding timestamp and is logged in a csv file,datalog.csv. An entry in the log file only happens upon a motion detection and on further receipt of the MQTT message”Motion/Voltage” at the server end The format of the datalog.csv is as shown below 
 
-![PCB](Auto-Burglar-Detection-and-Data-Analytics-with-PIR-Sensors-and-Machine-Learning/Images/image/Logdata2.PNG)
+![PCB](Images/image/Logdata2.PNG)
 
 #### Uploading logged data to InfluxDB
 
@@ -58,11 +58,11 @@ The datalog.csv file is uploaded to “historicaldb” in a particular format by
 
 The input data to “timestamp_formating.py” is of the format:
 
-![PCB](Auto-Burglar-Detection-and-Data-Analytics-with-PIR-Sensors-and-Machine-Learning/Images/image/Datalog1.PNG)
+![PCB](Images/image/Datalog1.PNG)
  
 Which is then transformed into the format as below:
 
-![PCB](Auto-Burglar-Detection-and-Data-Analytics-with-PIR-Sensors-and-Machine-Learning/Images/image/Datalog2.PNG)
+![PCB](Images/image/Datalog2.PNG)
 
 The “timestamp_formating.py” script aggregates the datalog.csv on a five-minute interval basis such that the timestamps are in five-minute intervals in the sequence dd/mm/yyyy hh: 00:00, dd/mm/yyyy hh:05:00, dd/mm/yyyy hh:10:00 and so on.
 
@@ -73,13 +73,13 @@ As a result, an entry in the output file conveys the following information: five
 
 The “timestamp_influxconversion_format.py” script converts the timestamp into the corresponding UNIX timestamp format.
 
-![PCB](Auto-Burglar-Detection-and-Data-Analytics-with-PIR-Sensors-and-Machine-Learning/Images/image/Datalog3.PNG)
+![PCB](Images/image/Datalog3.PNG)
 
 
 
 The "timestamp_influx_lineprotocol_format.py" transforms the existing format to a particular line protocol format such that the data suits to be fed into a measurement “sensor” within the “historicaldb”.The output file from this script is then fed to the InfluxDB “historicaldb” using the InfluxDB API POST request. The data gets updated in the “historicaldb” as follows:
 
-![PCB](Auto-Burglar-Detection-and-Data-Analytics-with-PIR-Sensors-and-Machine-Learning/Images/image/Datalog4.PNG)
+![PCB](Images/image/Datalog4.PNG)
 
 
 The weekly_influx_upload.sh is run weekly using the crontab services which is scheduled to run on every Sunday at 23:20:00 so that the historical data update happens automatically every week. and the datalog.csv is also refreshed weekly so that every week’s datalog.csv gets uploaded to the “historicaldb” to avoid duplicate upload.
@@ -91,7 +91,7 @@ The weekly_influx_upload.sh is run weekly using the crontab services which is sc
 
 In every five minutes of a day, a SELECT query is passed to the “historicaldb” to return the number of detections happened for that five minuteon that day. This is done using the “primary historicalsearch.py” script which is embedded within the “Python Shell” node in the Node-Red.
 
-![PCB](Auto-Burglar-Detection-and-Data-Analytics-with-PIR-Sensors-and-Machine-Learning/Images/image/SearchLogic.PNG)
+![PCB](Images/image/SearchLogic.PNG)
 
 In every five minute of a day, the instantaneous timestamp is passed as arguments to the “primary historicalsearch.py” script.This script takes this timestamp and derives the respective current WDay and current time index from the timestamp information.So,the week index will be any value between 1 to 7 and the time index will be any value between 0 to 287.
 The “historicaldb” already contains the historical data in the format (timestamp,WDay, time index,detections, online switch, mobile MAC). The script then passes a couple of select queries on this historical data :
@@ -112,12 +112,12 @@ In every five minute, the number of times , the MQTT message “Motion/Voltage�
 This historical five minute detections value and current five minute detections value are compared with each other on a function node. If the current five minute detections value exceeds the historical five minute detections value by a nominal percentage,then the situation can be considered as abnormal situation and the situation is classified as a "Chance of Intrusion" and otherwise as “Peace”.
 
 
-![PCB](Auto-Burglar-Detection-and-Data-Analytics-with-PIR-Sensors-and-Machine-Learning/Images/image/SearchCondition.PNG)
+![PCB](Images/image/SearchCondition.PNG)
 
 
 If an abnormal situation or "Chance of Intrusion" case arises, the current online switch value and current mobile MAC value are taken into consideration and different cases are formulated based on their value as follows:
 
-![PCB](Auto-Burglar-Detection-and-Data-Analytics-with-PIR-Sensors-and-Machine-Learning/Images/image/SearchMessage.PNG)
+![PCB](Images/image/SearchMessage.PNG)
 
 
 The message corresponds to “Detections are observed or check your dashboard to see if the switch value and mobile MAC value is correctly configured or not“. This message is displayed in the NodeRed dashboard.
@@ -139,7 +139,7 @@ o	This will fetch out the count of specific WDays existing in the “histroicald
 
 The division of these two results corresponds to the usual number of detections that happen on a five minute interval of a specific day when the person is present based on the historical data.This corresponds to the historical five min detections.The number of times , the MQTT message “Motion/Voltage” being received at the “mqtt in” node is counted in every five minute which corresponds to the current five minute detections value. Both these values are compared against each other as follows:
 
-![PCB](Auto-Burglar-Detection-and-Data-Analytics-with-PIR-Sensors-and-Machine-Learning/Images/image/SecondarySearch.PNG)
+![PCB](Images/image/SecondarySearch.PNG)
 
 This corresponds to the historical secondary search.
 
@@ -152,22 +152,22 @@ Two statistical methods are used to derive relevant  information from the logged
 
 Since the data is only logged in the trainingdata.csv file whenever a motion is detected, the timestamps logged in the dataset will be the timestamps of motion detection and the motion value logged in the dataset will be always “1’ as follows :
 
-![PCB](Auto-Burglar-Detection-and-Data-Analytics-with-PIR-Sensors-and-Machine-Learning/Images/image/Std.PNG)
+![PCB](Images/image/Std.PNG)
 
 The script “stdprediction.py” transforms the datalog.csv into another format as follows
 
-![PCB](Auto-Burglar-Detection-and-Data-Analytics-with-PIR-Sensors-and-Machine-Learning/Images/image/std1.PNG)
+![PCB](Images/image/std1.PNG)
 
 The script also filters the dataset by applying the selection condition such that online switch value = 1 , mobile MAC value = 1 and motion = 1.
 
-![PCB](Auto-Burglar-Detection-and-Data-Analytics-with-PIR-Sensors-and-Machine-Learning/Images/image/std2.PNG)
+![PCB](Images/image/std2.PNG)
 
 Hence, the dataset only contain the corresponding WDay and time indices when the person is present and when the motion is detected which indicates the time periods of motion detections at users presence.
 
 The script groups the motion detected time indices with respect to the WDay values such that the motion detected time indices of the WDay 2, Monday is stored in one list and the motion detected time indices of the WDay 3, Tuesday is stored in another list and so on. As a result, the motion detected time indices of each day is stored in each specific list or each group.
 
 
-![PCB](Auto-Burglar-Detection-and-Data-Analytics-with-PIR-Sensors-and-Machine-Learning/Images/image/stdblck.PNG)
+![PCB](Images/image/stdblck.PNG)
 
 The mean and standard deviation of the time indices of each WDay is calculated dynamically with every new detection that happens logged in the csv file. The cut off limit is defined as the thrice times the standard deviation. Likewise, the upper and the lower cut off limit with respect to the standard deviation value is calculated for each WDay. These values gets changed dynamically when a new detection gets logged into the csv file. This logic is implemented on the script which runs on every detection that happens.On every detection, the instantaneous timestamp is passed as arguments to the script which triggers the script to run and the respective week index and time index is derived from the timestamp.
 
@@ -180,17 +180,17 @@ The trainingdata.csv acts as the source file for this method.
 
 The script “iqrprediction.py” transforms the datalog.csv into another format as follows :
 
-![PCB](Auto-Burglar-Detection-and-Data-Analytics-with-PIR-Sensors-and-Machine-Learning/Images/image/iqr1.PNG)
+![PCB](Images/image/iqr1.PNG)
 
 The script also filters the dataset by applying the selection condition such that online switch value = 1 , mobile MAC value = 1 and motion = 1.
 
-![PCB](Auto-Burglar-Detection-and-Data-Analytics-with-PIR-Sensors-and-Machine-Learning/Images/image/std2.PNG)
+![PCB](Images/image/std2.PNG)
 
 Hence, the dataset only contain the corresponding WDay and time indices when the person is present and when the motion is detected which indicates the time periods of motion detections at users presence.
 
 The script groups the motion detected time indices with respect to the WDay values such that the motion detected time indices of the WDay 2, Monday is stored in one list and the motion detected time indices of the WDay 3, Tuesday is stored in another list and so on. As a result, the motion detected time indices of each day is stored in each specific list or each group.
 
-![PCB](Auto-Burglar-Detection-and-Data-Analytics-with-PIR-Sensors-and-Machine-Learning/Images/image/iqrblck.PNG)
+![PCB](Images/image/iqrblck.PNG)
 
 The interquartile region, upper whisker, lower whisker , upper quartile, lower quartile and mean of the time indices of each WDay is calculated dynamically and stored with every new detection that gets logged in the datalog.csv file.These values gets changed dynamically when a new detection gets logged into the csv file. This logic is implemented on the script which runs on every detection that happens.On every detection, the instantaneous timestamp is passed as arguments to the script which triggers the script to run and the respective WDay and time index are derived from the timestamp. If the passed current time index of a particular WDay is greater than the upper whisker/ upper quartile or lesser than the lower whisker/lower quartile or not within the interquartile region of that WDay, then that passed timestamp is regarded as an abnormal situation, that is Chance of Intrusion otherwise is regarded as a peaceful situation.
 
@@ -208,7 +208,7 @@ Loss : mean_squared_error Optimizer: adam
 
 The LSTM model obtained was quite satisfactory with the RMSE score of 1.6 as per test data validation given below where the orange plot refers to the predictions.
 
-![PCB](Auto-Burglar-Detection-and-Data-Analytics-with-PIR-Sensors-and-Machine-Learning/Images/LSTM_model_training_report.png)
+![PCB](Images/LSTM_model_training_report.png)
 
 The model was saved offline using appropriate libraries and used for real time prediction by inputting real time motion values. This practical move was achieved by creating a Flask application (ML server) based on python where we would load the model once when the server is run initially. The server is
 good to accept API calls which in turn are motion values. These motion values obtained are passed to the model where it would predict the next motion value( for next 5 min). The output of the model which is the predicted value is fetched back to the client and compared with the real time motion value from the sensor in that specific instance. Based on the variation of the values it is decided, if it’s a Intrusion or Motion caused by the user. The application server is enabled as a service “ modelstart.service” which is autorun every time the machine boots. Also the service restarts monthly once the training is completed to invoke and load the newly obtained model.
@@ -219,7 +219,7 @@ good to accept API calls which in turn are motion values. These motion values ob
 The PIR_MQTT node in Node-RED is connected to the broker installed in pi via Scion protocol. Whenever the data is sensed by the sensor, the ESP publishes value “Motion/ (battery voltage)” onto the mosquito broker installed in pi. The PIR_MQTT node in Node-RED (Client VM machine) subscribed to the same broker and topic in pi (data transfer between remote systems via Scion sig protocol) receives this data instantly and feeds it to the member nodes. Based on this, the battery status and the motion value is processed. This motion data is saved in a CSV file “ Trainingdata.csv” which is used monthly to train the model. The training duration is up to every user and also depend on the accuracy of the model obtained.
 As discussed, in case of motion, the Node-RED detects the motion value as “1”. Now since the model was trained with the data aggregated for 5min interval, the model predictions will always be for future 5 mins. Hence during a motion, the real time motion values across last 5 min interval is fed into LSTM to predict motion value for next 5 min interval. As discussed this is done by running a python file in “Python shell node” in node-red. The script would take the motion value as its input argument and make an API call to our Flask application server where the model is loaded and running. This value is fed to model for the prediction. The predicted value is fed back as the output of the script. This predicted value from the python shell is put in a register and compared with the real time motions at next 5min interval end. Based on the deviation or the overlapping of data, the final decisions are made.
 
-![PCB](Auto-Burglar-Detection-and-Data-Analytics-with-PIR-Sensors-and-Machine-Learning/Images/image/LSTMblck.PNG)
+![PCB](Images/image/LSTMblck.PNG)
 
 After comparison of real time and predicted values, a difference of these values are calculated. If the difference is greater than 5 motions (which is a customization parameters and could vary with different applications and users), the final decision from the Machine learning side as Intrusion. The output decision/response again depends on the value of ARP and online switch obtained. Again this decisive part depends on person to person who can customize the algorithm as per their choice
 If the output from LSTM is in a considerable range (threshold 5 motions) it is concluded as “Peace” ignoring switch and mac values.
@@ -231,7 +231,7 @@ However if the output from LSTM is considerably deviated from the normal range, 
 
 •	Switch = 1 Mac = 0 message : Detections are observed. Either Switch/Mobile misconfigured, Else Inrusion
 
-![PCB](Auto-Burglar-Detection-and-Data-Analytics-with-PIR-Sensors-and-Machine-Learning/Images/image/LSTMblck2.PNG)
+![PCB](Images/image/LSTMblck2.PNG)
 
 If the decision turns out to be any of the above 3 other than “Peace” (from the machine learning side) the user is notified by an alert mail sent to their respective mail id. This is done using the mail node in Node-RED.
 
@@ -243,9 +243,9 @@ The trainingdata.csv acts as the source file for this application.
 
 The script “weeklysummary_boxplot.py” transforms the trainingdata.csv into another format as follows:
 
-![PCB](Auto-Burglar-Detection-and-Data-Analytics-with-PIR-Sensors-and-Machine-Learning/Images/image/WDS1.PNG)
+![PCB](Images/image/WDS1.PNG)
 
-![PCB](Auto-Burglar-Detection-and-Data-Analytics-with-PIR-Sensors-and-Machine-Learning/Images/image/WDSBlck.PNG)
+![PCB](Images/image/WDSBlck.PNG)
 
 The box plot maps the time indices values with respect to the WDay value. In other words, the script creates the box plot for sunday by considering the time indices belonging to the WDay
 = 1 and creates the boxplot for Monday by considering the time indices belonging to the WDay = 2 and so on. This process is iterated for every week so that daily box plots of each of the week is obtained. A week’s box plot summary comprises of boxplots of Sunday, Monday, Tuesday, Wednesday, Thursday, Friday and Saturday. The Summary consists of box plot of the last four weeks. The script is scheduled to run daily at 21:00:00 using the crontab services as shown below:
@@ -257,7 +257,7 @@ The box plot maps the time indices values with respect to the WDay value. In oth
 
 The report indicates the characteristics of obtained trained LSTM model.
 
-![PCB](Auto-Burglar-Detection-and-Data-Analytics-with-PIR-Sensors-and-Machine-Learning/Images/LSTM_model_training_report.png)
+![PCB](Images/LSTM_model_training_report.png)
 
 
 ## IMPLEMENTATION OF GUI
@@ -282,12 +282,12 @@ The flow- based, visual programming development tool, Node-Red [6] has been empl
 
 •	Dashboard nodes which comprises of text nodes, gauge nodes, chart nodes has been used to serve the purpose of visualization to the user so that the user is able to know the live status of the home remotely.
 
-![PCB](Auto-Burglar-Detection-and-Data-Analytics-with-PIR-Sensors-and-Machine-Learning/Images/node-red-schema-nodes.png)
+![PCB](Images/node-red-schema-nodes.png)
 
 This acts as a Graphical User Interface for the users so that they can monitor the live status of the home remotely. On this GUI, the user can control the online switch value based on his/her presence. He/She can turn the switch to either ON or OFF based on his presence/absence. Whenever any email alerts are sent to the user stating any abnormalities, the user is able to monitor the system from any remote location.
 
-![PCB](Auto-Burglar-Detection-and-Data-Analytics-with-PIR-Sensors-and-Machine-Learning/Images/node-red-ui-1.png)
-![PCB](Auto-Burglar-Detection-and-Data-Analytics-with-PIR-Sensors-and-Machine-Learning/Images/node-red-ui-2.png)
+![PCB](Images/node-red-ui-1.png)
+![PCB](Images/node-red-ui-2.png)
 
 
 ## TOOLS AND HARDWARE IMPLEMENTATION SETUP
@@ -396,27 +396,27 @@ Running this file creates a model based on training motion data and saves the mo
 
 ### <ins>NODE RED UI AND MESSAGE OUTPUTS</ins>
 
-![PCB](Auto-Burglar-Detection-and-Data-Analytics-with-PIR-Sensors-and-Machine-Learning/Images/node-red-ui-1.png)
-![PCB](Auto-Burglar-Detection-and-Data-Analytics-with-PIR-Sensors-and-Machine-Learning/Images/node-red-ui-2.png)
+![PCB](Images/node-red-ui-1.png)
+![PCB](Images/node-red-ui-2.png)
 
 
 ### <ins>REPORTS</ins>
 
-![PCB](Auto-Burglar-Detection-and-Data-Analytics-with-PIR-Sensors-and-Machine-Learning/Images/LSTM_model_training_report.png)
-![PCB](Auto-Burglar-Detection-and-Data-Analytics-with-PIR-Sensors-and-Machine-Learning/Images/WeeklyBoxplotSummary.PNG)
+![PCB](Images/LSTM_model_training_report.png)
+![PCB](Images/WeeklyBoxplotSummary.PNG)
 
 ### <ins>INFLUX DB</ins>
 
-![PCB](Auto-Burglar-Detection-and-Data-Analytics-with-PIR-Sensors-and-Machine-Learning/Images/Influx.PNG)
+![PCB](Images/Influx.PNG)
 
 ### <ins>GRAFANA</ins>
 
-![PCB](Auto-Burglar-Detection-and-Data-Analytics-with-PIR-Sensors-and-Machine-Learning/Images/Grafana_Visualization_1.png)
+![PCB](Images/Grafana_Visualization_1.png)
 
 
 ### <ins>MAIL NOTIFICATION</ins>
 
-![PCB](Auto-Burglar-Detection-and-Data-Analytics-with-PIR-Sensors-and-Machine-Learning/Images/MailNotification.PNG)
+![PCB](Images/MailNotification.PNG)
 
 
 ## CONCLUSION
