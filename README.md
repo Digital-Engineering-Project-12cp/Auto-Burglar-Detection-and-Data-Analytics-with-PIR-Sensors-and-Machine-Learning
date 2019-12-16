@@ -23,6 +23,7 @@ There are several Internet of things (IoT) applications running on legacy networ
   specific format whereas the trainingdata.csv acts as the source file for training the LSTM model and the model is trained on a monthly basis. Hence, the datalog.csv is refreshed on a weekly basis and the trainingdata.csv is refreshed on a monthly basis. The training data.csv is also used for the statistical approaches and providing the weekly summary detection report.
 * The motion data, mobile mac data and the online switch data is visualized using **Grafana** and the predictions results are visualized using the **Node-Red dashboard**. Whenever the prediction results suggests an abnormal intrusion behavior, an email notification is sent out to the user.
 <br/>
+
 ![Communication](Images/image/Communication_Flow.jpg)
 
 ## HARDWARE INTERFACING
