@@ -39,7 +39,7 @@ def load_model():
     
 def prepare_scaler():
     global scaler
-    series = read_csv('/home/manish/env/trainingdata.csv', header=0,squeeze=True,index_col=0,parse_dates=[0])
+    series = read_csv('/home/manish/env/trainingdata_load.csv', header=0,squeeze=True,index_col=0,parse_dates=[0])
     series = series.astype('float')
     raw_values = series.values
 
