@@ -11,7 +11,7 @@ There are several Internet of things (IoT) applications running on legacy networ
 <br/>
 
 
-<Image src="Auto-Burglar-Detection-and-Data-Analytics-with-PIR-Sensors-and-Machine-Learning/Images/image/Blockdgm.png" class="center" 
+<Image src="Auto-Burglar-Detection-and-Data-Analytics-with-PIR-Sensors-and-Machine-Learning/Images/image/Blockdgm.png" class="center">
  
 
 ## COMMUNICATION FLOW
