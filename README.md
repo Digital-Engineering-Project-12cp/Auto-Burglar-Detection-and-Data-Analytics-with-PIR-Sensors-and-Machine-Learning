@@ -11,6 +11,7 @@ There are several Internet of things (IoT) applications running on legacy networ
 <br/>
 
 
+
 ![Communication](Images/image/Blockdgm.png)
  
 
@@ -300,7 +301,7 @@ This acts as a Graphical User Interface for the users so that they can monitor t
 * Setup the hardware PCB and physical switch (for WiFi manager reset functionality with respect to ESP8266) as per PCB gerber files with sleep mode setup. Burn the respective Arduino code into ESP8266. 
 
 
-<PUT THE HARDWARE............................@ ABHIJITH ABHIJITH >
+![Communication](Images/Picture3.jpg)
 
 ### RASPBERRY PI Installation
 
@@ -392,7 +393,7 @@ Running this file creates a model based on training motion data and saves the mo
 
 ### <ins>HARDWARE</ins>
 
-<PUT THE HARDWARE............................@ ABHIJITH ABHIJITH >
+![PCB](Images/Picture4.jpg)
 
 
 ### <ins>NODE RED UI AND MESSAGE OUTPUTS</ins>
